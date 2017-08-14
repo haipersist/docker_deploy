@@ -1,0 +1,55 @@
+version: "3"
+
+services:
+
+
+  db:
+    image: mysql
+    environment:
+       MYSQL_DATABASE: app_blog
+       MYSQL_ROOT_PASSWORD: admin
+    volumes:
+      - /srv/db:/var/lib/mysql
+    restart: always
+
+  redis:
+    image: redis
+    restart: always
+
+  memcached:
+    image: memcached
+    restart: always
+
+  web:
+    build: ./blog
+    ports:
+    - "8000:8000"
+    - "9001:9001"
+    volumes:
+    - ./blog:/blog
+    - /tmp/logs:/tmp
+    command: bash start.sh
+    links:
+    - redis
+    - memcached
+    - db
+    depends_on:
+      - db
+
+
+
+  nginx:
+    build: ./nginx
+    ports:
+    - "80:80"
+    volumes:
+    - ./blog/static:/usr/share/nginx/html/static:ro
+    - ./blog/media:/usr/share/nginx/html/media:ro
+    links:
+    - web
+    depends_on:
+    - web
+    restart: always
+
+
+
